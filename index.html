@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bombay Textile - Live Cloud Catalog</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0; padding: 0;
+            background-color: #fdfaf6; color: #333;
+        }
+        header {
+            background: linear-gradient(135deg, #70001a, #a30022);
+            color: white; text-align: center;
+            padding: 40px 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            position: relative;
+        }
+        header h1 { margin: 0; font-size: 2.8rem; letter-spacing: 3px; text-transform: uppercase; font-weight: 800; }
+        header p { margin: 8px 0 0 0; font-style: italic; font-size: 1.2rem; opacity: 0.9; }
+
+        .admin-lock-btn {
+            position: absolute; top: 15px; left: 15px;
+            background: rgba(255, 255, 255, 0.2); color: white;
+            border: 1px solid white; padding: 8px 15px; border-radius: 20px;
+            cursor: pointer; font-weight: bold; font-size: 0.85rem; transition: 0.3s;
+        }
+        .admin-lock-btn:hover { background: white; color: #70001a; }
+        
+        .share-panel {
+            background: #fff3cd; text-align: center; padding: 15px;
+            display: none; border-bottom: 2px solid #ffeeba;
+            position: sticky; top: 0; z-index: 1000;
+        }
+        .share-actions-group {
+            display: flex; justify-content: center; gap: 10px; margin-top: 5px; flex-wrap: wrap;
+        }
+        .share-btn {
+            background: #25D366; color: white; border: none; padding: 10px 25px;
+            font-weight: bold; border-radius: 25px; cursor: pointer; font-size: 1rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+        .share-btn:hover { background: #1ebd54; }
+        .copy-btn {
+            background: #007bff; color: white; border: none; padding: 10px 25px;
+            font-weight: bold; border-radius: 25px; cursor: pointer; font-size: 1rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+        .copy-btn:hover { background: #0056b3; }
+
+        .tab-container {
+            display: flex; justify-content: center; background-color: #70001a;
+            position: sticky; top: 55px; z-index: 999; box-shadow: 0 4px 10px rgba(0,0,0,0.1); flex-wrap: wrap;
+        }
+        .tab-btn {
+            background: none; border: none; color: #ffb3b3; padding: 15px 20px;
+            font-size: 1rem; font-weight: bold; cursor: pointer; transition: all 0.3s;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .tab-btn:hover { color: white; background-color: #a30022; }
+        .tab-btn.active { color: white; background-color: #a30022; border-bottom: 4px solid #fff; }
+
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .category-content { display: none; }
+        .category-content.active { display: block; }
+
+        .brand-section {
+            background: white; padding: 25px; border-radius: 15px;
+            margin-bottom: 45px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); border-left: 6px solid #a30022;
+        }
+        .brand-title {
+            font-size: 1.6rem; color: #70001a; margin-top: 0; margin-bottom: 15px;
+            font-weight: 700; text-transform: uppercase; border-bottom: 1px dashed #eee; padding-bottom: 10px;
+        }
+
+        .album-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .product-card { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 3px 10px rgba(0,0,0,0.05); text-align: center; border: 1px solid #f0f0f0; padding-bottom: 12px; position: relative; }
+        
+        .image-box {
+            width: 100%; height: 280px; background-color: #f7f7f7;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border-bottom: 1px solid #eee; position: relative;
+        }
+        .lock-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #f1f1f1; display: flex; align-items: center; justify-content: center;
+            color: #aaa; font-size: 0.9rem; font-weight: 600;
+        }
+        .image-box img { width: 100%; height: 100%; object-fit: cover; display: none; cursor: zoom-in; }
+        
+        .upload-loading {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.8); z-index: 10; align-items: center; justify-content: center;
+            font-weight: bold; color: #70001a;
+        }
+
+        .admin-actions { padding: 0 10px; }
+        .easy-upload-btn {
+            display: none; background: #70001a; color: white; border: none;
+            padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 0.85rem;
+            margin-top: 10px; font-weight: bold; width: 100%;
+        }
+        .remove-image-btn {
+            display: none; background: #e74c3c; color: white; border: none;
+            padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 0.8rem;
+            margin-top: 5px; font-weight: bold; width: 100%;
+        }
+        
+        .file-input { display: none; }
+
+        .product-info { padding: 10px; }
+        .product-title { font-size: 0.95rem; font-weight: 600; margin-bottom: 8px; color: #222; }
+        .whatsapp-btn {
+            display: inline-block; background-color: #25D366; color: white;
+            text-decoration: none; padding: 6px 15px; border-radius: 20px; font-weight: bold; font-size: 0.8rem; width: 80%; margin-top: 5px;
+        }
+
+        .lightbox-modal {
+            display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.9); align-items: center; justify-content: center;
+        }
+        .lightbox-modal img { max-width: 90%; max-height: 85vh; border-radius: 5px; }
+        .lightbox-close { position: absolute; top: 20px; right: 30px; color: #fff; font-size: 40px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="share-panel" id="sharePanel">
+        📢 <b>Owner Cloud Control:</b> Aap jo bhi photo upload karenge, woh bina kisi link ke customers ko hamesha live dikhegi! <br>
+        <div class="share-actions-group">
+            <button class="share-btn" onclick="shareOnWhatsApp()">🟢 Share Website to WhatsApp</button>
+            <button class="copy-btn" onclick="copyCatalogLink()">📋 Copy Website Link</button>
+        </div>
+    </div>
+
+    <header>
+        <button class="admin-lock-btn" id="lockBtn" onclick="toggleAdmin()">🔒 Customer Mode</button>
+        <h1>BOMBAY TEXTILE</h1>
+        <p>Premium Permanent Live Catalog</p>
+    </header>
+
+    <div class="tab-container">
+        <button class="tab-btn active" onclick="switchTab(event, 'loose')">✨ Loose Saree (20)</button>
+        <button class="tab-btn" onclick="switchTab(event, 'banarasi')">🔱 Banarasi Saree (3)</button>
+        <button class="tab-btn" onclick="switchTab(event, 'lehenga')">👑 Lehenga Album (4)</button>
+    </div>
+
+    <div class="container">
+        <div id="loose" class="category-content active"></div>
+        <div id="banarasi" class="category-content"></div>
+        <div id="lehenga" class="category-content"></div>
+    </div>
+
+    <div id="lightbox" class="lightbox-modal" onclick="closeLightbox()">
+        <span class="lightbox-close">&times;</span>
+        <img id="lightboxImg" src="">
+    </div>
+
+    <script>
+        const MY_WHATSAPP_NUMBER = "917909058207"; 
+        
+        // ⚠️ YAHA APNI IMGBB API KEY DALNA MAT BHOOLNA
+        const IMGBB_API_KEY = "9f125c1f9e015ff778a1b556bf91ae4c"; 
+
+        let isAdminLoggedIn = false; 
+        let currentUploadedImages = {}; 
+
+        // LocalStorage se cloud links load karna taaki sabko dikhe
+        if (localStorage.getItem('bombay_cloud_catalog')) {
+            try {
+                currentUploadedImages = JSON.parse(localStorage.getItem('bombay_cloud_catalog'));
+            } catch(e) { console.log("Local Database Error"); }
+        }
+
+        const looseCompanies = [
+            "Laxmipati Sarees", "Subhash Sarees", "Vishal Fabrics", "Vipul Fashion", "Ambika Sarees",
+            "Poonam Sarees", "Ganga Fashion", "Kesar Prints", "LT Fabrics", "Shree Fabs",
+            "Deepsy Sarees", "Varni Fabrics", "Rani Saheba", "Kashvi Creation", "TFH Sarees",
+            "Zoya Fashion", "Rajguru Fabrics", "Surat Hub", "Bombay Boutique Special", "Ganesh Prints"
+        ];
+        const banarasiCompanies = ["Nalli Silks", "Kala Niketan", "Radha Silk Mills"];
+        const lehengaCompanies = ["Bridal Look", "Avibadan", "Sur Shyam Collection", "R R Corporation"];
+
+        function generateCustomAlbum(tabId, companyArray, typeLabel) {
+            const targetContainer = document.getElementById(tabId);
+            let completeHTML = '';
+            
+            companyArray.forEach((company, index) => {
+                let imagesHTML = '';
+                for(let i = 1; i <= 5; i++) {
+                    let idUnique = `${tabId}-${index}-${i}`;
+                    let savedUrl = currentUploadedImages[idUnique] || "";
+                    
+                    let imgStyle = savedUrl ? "display:block;" : "display:none;";
+                    let overlayStyle = savedUrl ? "display:none;" : "display:flex;";
+                    let uploadDisplay = isAdminLoggedIn ? "inline-block" : "none";
+                    let removeDisplay = (isAdminLoggedIn && savedUrl) ? "inline-block" : "none";
+
+                    imagesHTML += `
+                        <div class="product-card">
+                            <div class="upload-loading" id="loading-${idUnique}">☁️ Uploading...</div>
+                            <div class="image-box">
+                                <div class="lock-overlay" id="overlay-${idUnique}" style="${overlayStyle}">No Image Available</div>
+                                <img id="img-${idUnique}" src="${savedUrl}" style="${imgStyle}" alt="Product" onclick="openLightbox('${idUnique}')">
+                            </div>
+                            <div class="admin-actions">
+                                <button class="easy-upload-btn" id="btn-${idUnique}" style="display:${uploadDisplay};" onclick="startEasyUpload('${idUnique}')">📸 Select Photo</button>
+                                <button class="remove-image-btn" id="remove-${idUnique}" style="display:${removeDisplay};" onclick="removeImage('${idUnique}')">❌ Delete</button>
+                            </div>
+                            <input type="file" id="input-${idUnique}" class="file-input" accept="image/*" onchange="uploadToCloud(event, '${idUnique}')">
+
+                            <div class="product-info">
+                                <div class="product-title">Vol-${i}</div>
+                                <a href="https://wa.me/${MY_WHATSAPP_NUMBER}?text=Hi%20Bombay%20Textile,%20mujhe%20${encodeURIComponent(company)}%20${encodeURIComponent(typeLabel)}%20Vol-${i}%20chahiye" target="_blank" class="whatsapp-btn">🟢 Order Now</a>
+                            </div>
+                        </div>
+                    `;
+                }
+                completeHTML += `<div class="brand-section"><h2 class="brand-title">${index + 1}. ${company}</h2><div class="album-grid">${imagesHTML}</div></div>`;
+            });
+            targetContainer.innerHTML = completeHTML;
+        }
+
+        if (sessionStorage.getItem("adminAuthenticated") === "true") {
+            isAdminLoggedIn = true;
+            setTimeout(() => {
+                document.getElementById("lockBtn").innerHTML = "🔓 Owner Mode Active";
+                document.getElementById("lockBtn").style.background = "#25D366";
+                document.getElementById("sharePanel").style.display = "block";
+                refreshUI();
+            }, 10);
+        }
+
+        generateCustomAlbum('loose', looseCompanies, 'Loose Saree');
+        generateCustomAlbum('banarasi', banarasiCompanies, 'Banarasi Saree');
+        generateCustomAlbum('lehenga', lehengaCompanies, 'Lehenga');
+
+        function toggleAdmin() {
+            if (!isAdminLoggedIn) {
+                let user = prompt("Enter Admin ID:");
+                let pass = prompt("Enter Password:");
+                if (user === "admin" && pass === "bombay786") {
+                    isAdminLoggedIn = true;
+                    sessionStorage.setItem("adminAuthenticated", "true");
+                    document.getElementById("lockBtn").innerHTML = "🔓 Owner Mode Active";
+                    document.getElementById("lockBtn").style.background = "#25D366";
+                    document.getElementById("sharePanel").style.display = "block";
+                    refreshUI();
+                } else { alert("⚠️ Access Denied!"); }
+            } else {
+                isAdminLoggedIn = false;
+                sessionStorage.removeItem("adminAuthenticated");
+                document.getElementById("lockBtn").innerHTML = "🔒 Customer Mode";
+                document.getElementById("lockBtn").style.background = "rgba(255, 255, 255, 0.2)";
+                document.getElementById("sharePanel").style.none = "none";
+                refreshUI();
+            }
+        }
+
+        function refreshUI() {
+            document.querySelectorAll('.easy-upload-btn').forEach(btn => btn.style.display = isAdminLoggedIn ? 'inline-block' : 'none');
+            document.querySelectorAll('.remove-image-btn').forEach(btn => {
+                const id = btn.id.replace('remove-', '');
+                btn.style.display = (isAdminLoggedIn && currentUploadedImages[id]) ? 'inline-block' : 'none';
+            });
+        }
+
+        function startEasyUpload(id) { document.getElementById(`input-${id}`).click(); }
+
+        // ☁️ LIVE CLOUD UPLOAD LOGIC
+        function uploadToCloud(event, id) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if(IMGBB_API_KEY === "YAHAN_APNI_API_KEY_DALEIN" || IMGBB_API_KEY === "") {
+                alert("⚠️ Please configuration error: Code ke andar apni ImgBB API key enter karein tabhi photos sabko dikhengi!");
+                return;
+            }
+
+            // Loader dikhana
+            document.getElementById(`loading-${id}`).style.display = "flex";
+
+            let formData = new FormData();
+            formData.append("image", file);
+
+            fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(result => {
+                document.getElementById(`loading-${id}`).style.display = "none";
+                if(result.success) {
+                    let cloudUrl = result.data.url;
+                    
+                    // Database sync & Save
+                    currentUploadedImages[id] = cloudUrl;
+                    localStorage.setItem('bombay_cloud_catalog', JSON.stringify(currentUploadedImages));
+                    
+                    document.getElementById(`img-${id}`).src = cloudUrl;
+                    document.getElementById(`img-${id}`).style.display = 'block';
+                    document.getElementById(`overlay-${id}`).style.display = 'none';
+                    refreshUI();
+                    alert("✅ Photo live upload ho chuki hai aur ab sabhi customers ko dikhegi!");
+                } else {
+                    alert("❌ Upload failed, please try again.");
+                }
+            })
+            .catch(error => {
+                document.getElementById(`loading-${id}`).style.display = "none";
+                console.error("Error:", error);
+                alert("❌ Internet issue. Upload nahi ho paya.");
+            });
+        }
+
+        function removeImage(id) {
+            if(confirm("Delete photo permanently from everyone's view?")) {
+                delete currentUploadedImages[id];
+                localStorage.setItem('bombay_cloud_catalog', JSON.stringify(currentUploadedImages));
+                document.getElementById(`img-${id}`).style.display = 'none';
+                document.getElementById(`overlay-${id}`).style.display = 'flex';
+                refreshUI();
+            }
+        }
+
+        function shareOnWhatsApp() {
+            let websiteUrl = window.location.origin + window.location.pathname;
+            let whatsappText = encodeURIComponent("Namaste! Bombay Textile ka live catalog dekhne ke liye is official link par click karein: \n\n" + websiteUrl);
+            window.open("https://wa.me/?text=" + whatsappText, "_blank");
+        }
+
+        function copyCatalogLink() {
+            let websiteUrl = window.location.origin + window.location.pathname;
+            navigator.clipboard.writeText(websiteUrl).then(() => {
+                alert("📋 Website Link copied to clipboard!");
+            });
+        }
+
+        function switchTab(event, tabId) {
+            document.querySelectorAll('.category-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        function openLightbox(id) {
+            const imgSrc = document.getElementById(`img-${id}`).src;
+            if (imgSrc) {
+                document.getElementById("lightboxImg").src = imgSrc;
+                document.getElementById("lightbox").style.display = "flex";
+            }
+        }
+        function closeLightbox() { document.getElementById("lightbox").style.display = "none"; }
+    </script>
+</body>
+</html>
