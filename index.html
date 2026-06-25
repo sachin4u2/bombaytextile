@@ -3,7 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bombay Textile - Live Cloud Catalog</title>
+    <title>Bombay Textile - Realtime Live Catalog</title>
+    
+    <script>
+        // =========================================================================
+        // 🚨 CONFIGURATION BOX (SABSE UPAR): Yahan apni dono details dhyan se dalein
+        // =========================================================================
+        const IMGBB_API_KEY = "9f125c1f9e015ff778a1b556bf91ae4c"; 
+        const FIREBASE_DB_URL = "https://bombay-textile-default-rtdb.firebaseio.com/"; 
+        // =========================================================================
+        
+        const MY_WHATSAPP_NUMBER = "917909058207"; 
+    </script>
+
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -126,7 +138,7 @@
 <body>
 
     <div class="share-panel" id="sharePanel">
-        📢 <b>Owner Cloud Control:</b> Aap jo bhi photo upload karenge, woh bina kisi link ke customers ko hamesha live dikhegi! <br>
+        📢 <b>Owner Realtime Mode:</b> Aap jo bhi photo lagayenge, woh turant duniya ke har customer ko live dikhegi! <br>
         <div class="share-actions-group">
             <button class="share-btn" onclick="shareOnWhatsApp()">🟢 Share Website to WhatsApp</button>
             <button class="copy-btn" onclick="copyCatalogLink()">📋 Copy Website Link</button>
@@ -136,7 +148,7 @@
     <header>
         <button class="admin-lock-btn" id="lockBtn" onclick="toggleAdmin()">🔒 Customer Mode</button>
         <h1>BOMBAY TEXTILE</h1>
-        <p>Premium Permanent Live Catalog</p>
+        <p>Premium Realtime Live Catalog</p>
     </header>
 
     <div class="tab-container">
@@ -157,20 +169,8 @@
     </div>
 
     <script>
-        const MY_WHATSAPP_NUMBER = "917909058207"; 
-        
-        // ⚠️ YAHA APNI IMGBB API KEY DALNA MAT BHOOLNA
-        const IMGBB_API_KEY = "9f125c1f9e015ff778a1b556bf91ae4c"; 
-
         let isAdminLoggedIn = false; 
         let currentUploadedImages = {}; 
-
-        // LocalStorage se cloud links load karna taaki sabko dikhe
-        if (localStorage.getItem('bombay_cloud_catalog')) {
-            try {
-                currentUploadedImages = JSON.parse(localStorage.getItem('bombay_cloud_catalog'));
-            } catch(e) { console.log("Local Database Error"); }
-        }
 
         const looseCompanies = [
             "Laxmipati Sarees", "Subhash Sarees", "Vishal Fabrics", "Vipul Fashion", "Ambika Sarees",
@@ -180,6 +180,39 @@
         ];
         const banarasiCompanies = ["Nalli Silks", "Kala Niketan", "Radha Silk Mills"];
         const lehengaCompanies = ["Bridal Look", "Avibadan", "Sur Shyam Collection", "R R Corporation"];
+
+        function listenToLiveDatabase() {
+            if(!FIREBASE_DB_URL || FIREBASE_DB_URL.includes("YAHAN_APNA_FIREBASE")) return;
+
+            let url = FIREBASE_DB_URL.endsWith('/') ? FIREBASE_DB_URL + "catalog.json" : FIREBASE_DB_URL + "/catalog.json";
+            
+            setInterval(() => {
+                fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    if(data) {
+                        currentUploadedImages = data;
+                        updateAllImagesOnScreen();
+                    }
+                }).catch(e => console.log("Firebase Connection Active"));
+            }, 3000);
+        }
+
+        function updateAllImagesOnScreen() {
+            Object.keys(currentUploadedImages).forEach(idUnique => {
+                let cloudUrl = currentUploadedImages[idUnique];
+                let imgEl = document.getElementById(`img-${idUnique}`);
+                let overlayEl = document.getElementById(`overlay-${idUnique}`);
+                let removeBtn = document.getElementById(`remove-${idUnique}`);
+
+                if(imgEl && cloudUrl) {
+                    imgEl.src = cloudUrl;
+                    imgEl.style.display = 'block';
+                    if(overlayEl) overlayEl.style.display = 'none';
+                    if(removeBtn && isAdminLoggedIn) removeBtn.style.display = 'inline-block';
+                }
+            });
+        }
 
         function generateCustomAlbum(tabId, companyArray, typeLabel) {
             const targetContainer = document.getElementById(tabId);
@@ -198,7 +231,7 @@
 
                     imagesHTML += `
                         <div class="product-card">
-                            <div class="upload-loading" id="loading-${idUnique}">☁️ Uploading...</div>
+                            <div class="upload-loading" id="loading-${idUnique}">☁️ Uploading To Cloud...</div>
                             <div class="image-box">
                                 <div class="lock-overlay" id="overlay-${idUnique}" style="${overlayStyle}">No Image Available</div>
                                 <img id="img-${idUnique}" src="${savedUrl}" style="${imgStyle}" alt="Product" onclick="openLightbox('${idUnique}')">
@@ -234,6 +267,7 @@
         generateCustomAlbum('loose', looseCompanies, 'Loose Saree');
         generateCustomAlbum('banarasi', banarasiCompanies, 'Banarasi Saree');
         generateCustomAlbum('lehenga', lehengaCompanies, 'Lehenga');
+        listenToLiveDatabase();
 
         function toggleAdmin() {
             if (!isAdminLoggedIn) {
@@ -252,7 +286,7 @@
                 sessionStorage.removeItem("adminAuthenticated");
                 document.getElementById("lockBtn").innerHTML = "🔒 Customer Mode";
                 document.getElementById("lockBtn").style.background = "rgba(255, 255, 255, 0.2)";
-                document.getElementById("sharePanel").style.none = "none";
+                document.getElementById("sharePanel").style.display = "none";
                 refreshUI();
             }
         }
@@ -267,17 +301,15 @@
 
         function startEasyUpload(id) { document.getElementById(`input-${id}`).click(); }
 
-        // ☁️ LIVE CLOUD UPLOAD LOGIC
         function uploadToCloud(event, id) {
             const file = event.target.files[0];
             if (!file) return;
 
-            if(IMGBB_API_KEY === "YAHAN_APNI_API_KEY_DALEIN" || IMGBB_API_KEY === "") {
-                alert("⚠️ Please configuration error: Code ke andar apni ImgBB API key enter karein tabhi photos sabko dikhengi!");
+            if(IMGBB_API_KEY.includes("YAHAN_APNI") || FIREBASE_DB_URL.includes("YAHAN_APNA")) {
+                alert("⚠️ Configuration Error: Pehle apni ImgBB Key aur Firebase Link code ke andar sabse upar set karein!");
                 return;
             }
 
-            // Loader dikhana
             document.getElementById(`loading-${id}`).style.display = "flex";
 
             let formData = new FormData();
@@ -289,50 +321,57 @@
             })
             .then(response => response.json())
             .then(result => {
-                document.getElementById(`loading-${id}`).style.display = "none";
                 if(result.success) {
                     let cloudUrl = result.data.url;
+                    let saveUrl = FIREBASE_DB_URL.endsWith('/') ? FIREBASE_DB_URL + `catalog/${id}.json` : FIREBASE_DB_URL + `/catalog/${id}.json`;
                     
-                    // Database sync & Save
-                    currentUploadedImages[id] = cloudUrl;
-                    localStorage.setItem('bombay_cloud_catalog', JSON.stringify(currentUploadedImages));
-                    
-                    document.getElementById(`img-${id}`).src = cloudUrl;
-                    document.getElementById(`img-${id}`).style.display = 'block';
-                    document.getElementById(`overlay-${id}`).style.display = 'none';
-                    refreshUI();
-                    alert("✅ Photo live upload ho chuki hai aur ab sabhi customers ko dikhegi!");
+                    fetch(saveUrl, {
+                        method: "PUT",
+                        body: JSON.stringify(cloudUrl)
+                    })
+                    .then(() => {
+                        document.getElementById(`loading-${id}`).style.display = "none";
+                        currentUploadedImages[id] = cloudUrl;
+                        updateAllImagesOnScreen();
+                        refreshUI();
+                        alert("✅ Live Sync Complete! Yeh photo ab duniya ke har customer ko usi waqt dikhegi.");
+                    });
                 } else {
-                    alert("❌ Upload failed, please try again.");
+                    document.getElementById(`loading-${id}`).style.display = "none";
+                    alert("❌ ImgBB Upload Failed.");
                 }
             })
             .catch(error => {
                 document.getElementById(`loading-${id}`).style.display = "none";
-                console.error("Error:", error);
-                alert("❌ Internet issue. Upload nahi ho paya.");
+                alert("❌ Connection Error.");
             });
         }
 
         function removeImage(id) {
-            if(confirm("Delete photo permanently from everyone's view?")) {
-                delete currentUploadedImages[id];
-                localStorage.setItem('bombay_cloud_catalog', JSON.stringify(currentUploadedImages));
-                document.getElementById(`img-${id}`).style.display = 'none';
-                document.getElementById(`overlay-${id}`).style.display = 'flex';
-                refreshUI();
+            if(confirm("Delete photo from everyone's view permanently?")) {
+                let deleteUrl = FIREBASE_DB_URL.endsWith('/') ? FIREBASE_DB_URL + `catalog/${id}.json` : FIREBASE_DB_URL + `/catalog/${id}.json`;
+                
+                fetch(deleteUrl, { method: "DELETE" })
+                .then(() => {
+                    delete currentUploadedImages[id];
+                    document.getElementById(`img-${id}`).style.display = 'none';
+                    document.getElementById(`overlay-${id}`).style.display = 'flex';
+                    refreshUI();
+                    alert("🗑️ Photo permanently removed!");
+                });
             }
         }
 
         function shareOnWhatsApp() {
             let websiteUrl = window.location.origin + window.location.pathname;
-            let whatsappText = encodeURIComponent("Namaste! Bombay Textile ka live catalog dekhne ke liye is official link par click karein: \n\n" + websiteUrl);
+            let whatsappText = encodeURIComponent("Namaste! Bombay Textile ka official live catalog dekhne ke liye is link par click karein: \n\n" + websiteUrl);
             window.open("https://wa.me/?text=" + whatsappText, "_blank");
         }
 
         function copyCatalogLink() {
             let websiteUrl = window.location.origin + window.location.pathname;
             navigator.clipboard.writeText(websiteUrl).then(() => {
-                alert("📋 Website Link copied to clipboard!");
+                alert("📋 Website Link copied!");
             });
         }
 
