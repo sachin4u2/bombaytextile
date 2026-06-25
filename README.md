@@ -1,4 +1,4 @@
-# 🛍️ BOMBAY TEXTILE — Official Live Digital Catalog
+# 🛍️ BOMBAY TEXTILES — Official Live Digital Catalog
 
 <p align="center">
   <img src="https://img.shields.io/badge/Status-Live%20&%20Instant%20Sync-brightgreen?style=for-the-badge&logo=google-cloud" alt="Status">
@@ -17,11 +17,9 @@ Niche diye gaye button par click karke hamari live website par jain aur naya col
 
 <p align="center">
   <a href="https://YOUR_GITHUB_USERNAME.github.io/bombaytextile/" target="_blank">
-    <img src="https://img.shields.io/badge/🔗%20VISIT%20LIVE%20CATALOG-CLICK%20HERE-70001a?style=for-the-badge&logo=google-chrome&logoColor=white" width="300" height="60" alt="Live Website">
+    <img src="https://img.shields.io/badge/🔗%20VISIT%20LIVE%20CATALOG-CLICK%20HERE-70001a?style=for-the-badge&logo=google-chrome&logoColor=white" width="300" height="60" alt="https://sachin4u2.github.io/bombaytextile/">
   </a>
 </p>
-
-> ⚠️ **Note for Owner:** Pehli baar use karne se pehle upar diye gaye button ke link mein `YOUR_GITHUB_USERNAME` ki jagah apna asli GitHub username zaroor daal dein taaki button sahi se kaam kare.
 
 ---
 
